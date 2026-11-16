@@ -143,6 +143,11 @@
       transform: scale(0.96);
     }
 
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     .result-card {
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
@@ -190,6 +195,19 @@
       outline: none;
       user-select: text;
       -webkit-user-select: text;
+    }
+
+    .input-group input:read-only {
+      background: rgba(255, 255, 255, 0.06);
+      color: #a8ff78;
+      border-color: rgba(168, 255, 120, 0.3);
+    }
+
+    .nick-msg {
+      font-size: 11px;
+      margin-top: 4px;
+      min-height: 15px;
+      color: #ff6b6b;
     }
 
     .ranking-box {
@@ -247,8 +265,9 @@
     <div class="game-subtitle">콘 위에 행성을 차곡차곡 쌓아보세요!</div>
     
     <div class="input-group">
-      <label for="home-nickname">내 닉네임 설정 (최고 기록만 등록됩니다)</label>
-      <input type="text" id="home-nickname" placeholder="닉네임 입력 (예: 우주스타)" maxlength="10">
+      <label for="home-nickname" id="nick-label">내 닉네임 설정 (1인 1닉네임 고정)</label>
+      <input type="text" id="home-nickname" placeholder="사용할 닉네임 입력 (최대 10자)" maxlength="10">
+      <div class="nick-msg" id="nick-error-msg"></div>
     </div>
 
     <div class="ranking-box">
@@ -284,7 +303,7 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
   import { 
-    getFirestore, collection, addDoc, getDocs, query, where, orderBy, limit, updateDoc, deleteDoc, doc 
+    getFirestore, collection, setDoc, getDoc, getDocs, query, where, orderBy, limit, doc 
   } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
   const firebaseConfig = {
@@ -300,45 +319,108 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  window.saveScoreToCloud = async function(name, newScore) {
-    const cleanName = name.trim() || "우주여행자";
-    try {
-      const rankingsRef = collection(db, "rankings");
-      const q = query(rankingsRef, where("name", "==", cleanName));
-      const snapshot = await getDocs(q);
+  // 기기 고유 ID 생성 및 영구 보관 (한 기기당 1개 문서만 사용하도록 강제)
+  function getDeviceId() {
+    let id = localStorage.getItem('space_ice_device_id');
+    if (!id) {
+      id = 'dev_' + Date.now() + '_' + Math.random().toString(36).substring(2, 10);
+      localStorage.setItem('space_ice_device_id', id);
+    }
+    return id;
+  }
+  const DEVICE_ID = getDeviceId();
 
-      if (snapshot.empty) {
-        await addDoc(rankingsRef, {
+  // 페이지 접속 시 이 기기로 이미 등록된 닉네임이 있는지 서버에서 확인
+  async function syncRegisteredNickname() {
+    const nickInput = document.getElementById('home-nickname');
+    const nickLabel = document.getElementById('nick-label');
+    const nickMsg = document.getElementById('nick-error-msg');
+    try {
+      const myDocSnap = await getDoc(doc(db, "rankings", DEVICE_ID));
+      if (myDocSnap.exists()) {
+        const registeredName = myDocSnap.data().name;
+        nickInput.value = registeredName;
+        nickInput.readOnly = true;
+        localStorage.setItem('space_ice_locked_nickname', registeredName);
+        nickLabel.textContent = "내 고정 닉네임 (중복 생성 방지됨)";
+        nickMsg.style.color = "#94a3b8";
+        nickMsg.textContent = "이 기기에 등록된 전용 닉네임입니다.";
+      }
+    } catch (e) {
+      console.error("기기 정보 확인 오류:", e);
+    }
+  }
+  syncRegisteredNickname();
+
+  // 게임 시작 전 닉네임 중복 및 유효성 검사
+  window.validateAndLockNickname = async function(inputName) {
+    const cleanName = inputName.trim();
+    const nickMsg = document.getElementById('nick-error-msg');
+    const nickInput = document.getElementById('home-nickname');
+    const nickLabel = document.getElementById('nick-label');
+
+    // 이미 고정된 닉네임이 있으면 그대로 통과
+    const lockedName = localStorage.getItem('space_ice_locked_nickname');
+    if (lockedName) {
+      nickInput.value = lockedName;
+      return lockedName;
+    }
+
+    if (!cleanName) {
+      nickMsg.style.color = "#ff6b6b";
+      nickMsg.textContent = "닉네임을 입력해 주세요!";
+      return null;
+    }
+
+    try {
+      // 다른 기기에서 동일한 닉네임을 이미 쓰고 있는지 확인
+      const q = query(collection(db, "rankings"), where("name", "==", cleanName));
+      const snap = await getDocs(q);
+      let isTakenByOther = false;
+      snap.forEach((d) => {
+        if (d.id !== DEVICE_ID) isTakenByOther = true;
+      });
+
+      if (isTakenByOther) {
+        nickMsg.style.color = "#ff6b6b";
+        nickMsg.textContent = "이미 다른 사람이 사용 중인 닉네임입니다!";
+        return null;
+      }
+
+      // 사용 가능하면 이 기기의 고정 닉네임으로 잠금 및 초기 등록
+      await setDoc(doc(db, "rankings", DEVICE_ID), {
+        name: cleanName,
+        score: 0,
+        timestamp: Date.now()
+      }, { merge: true });
+
+      localStorage.setItem('space_ice_locked_nickname', cleanName);
+      nickInput.value = cleanName;
+      nickInput.readOnly = true;
+      nickLabel.textContent = "내 고정 닉네임 (중복 생성 방지됨)";
+      nickMsg.style.color = "#a8ff78";
+      nickMsg.textContent = "닉네임이 확정되었습니다!";
+      return cleanName;
+    } catch (e) {
+      console.error("닉네임 확인 오류:", e);
+      return cleanName;
+    }
+  };
+
+  // 기기 ID 문서 1개에만 최고 점수 덮어쓰기 (1인 다계정/중복 줄 원천 차단)
+  window.saveScoreToCloud = async function(name, newScore) {
+    const cleanName = localStorage.getItem('space_ice_locked_nickname') || name.trim() || "우주여행자";
+    try {
+      const myDocRef = doc(db, "rankings", DEVICE_ID);
+      const myDocSnap = await getDoc(myDocRef);
+      const prevScore = myDocSnap.exists() ? (myDocSnap.data().score || 0) : -1;
+
+      if (newScore > prevScore) {
+        await setDoc(myDocRef, {
           name: cleanName,
           score: newScore,
           timestamp: Date.now()
         });
-      } else {
-        let highestDoc = null;
-        let maxPrevScore = -1;
-        const docsToDelete = [];
-
-        snapshot.forEach((d) => {
-          const data = d.data();
-          if (data.score > maxPrevScore) {
-            if (highestDoc) docsToDelete.push(highestDoc.id);
-            maxPrevScore = data.score;
-            highestDoc = d;
-          } else {
-            docsToDelete.push(d.id);
-          }
-        });
-
-        for (const id of docsToDelete) {
-          await deleteDoc(doc(db, "rankings", id));
-        }
-
-        if (highestDoc && newScore > maxPrevScore) {
-          await updateDoc(doc(db, "rankings", highestDoc.id), {
-            score: newScore,
-            timestamp: Date.now()
-          });
-        }
       }
       loadRankings();
     } catch (e) {
@@ -396,13 +478,14 @@
   const restartBtn = document.getElementById('restart-btn');
   const homeNickname = document.getElementById('home-nickname');
 
-  const savedNick = localStorage.getItem('space_ice_nickname');
-  homeNickname.value = savedNick ? savedNick : "우주여행자";
-  homeNickname.addEventListener('input', () => {
-    localStorage.setItem('space_ice_nickname', homeNickname.value);
-  });
+  // 로컬에 이미 고정된 닉네임이 있으면 즉시 입력창 잠금
+  const lockedNick = localStorage.getItem('space_ice_locked_nickname');
+  if (lockedNick) {
+    homeNickname.value = lockedNick;
+    homeNickname.readOnly = true;
+    document.getElementById('nick-label').textContent = "내 고정 닉네임 (중복 생성 방지됨)";
+  }
 
-  // 모바일 하단 여백을 충분히 확보하도록 콘 Y 위치 상향 (height - 135)
   const CONE_BOTTOM_OFFSET = 135;
 
   const cone = {
@@ -559,8 +642,24 @@
     if (gameState === 'PLAYING' && e.touches.length > 0) updateTargetX(e.touches[0].clientX);
   }, { passive: true });
 
+  async function handleStartClick() {
+    startBtn.disabled = true;
+    startBtn.textContent = "확인 중...";
+    
+    let validName = homeNickname.value.trim();
+    if (window.validateAndLockNickname) {
+      validName = await window.validateAndLockNickname(homeNickname.value);
+    }
+
+    startBtn.disabled = false;
+    startBtn.textContent = "게임 시작";
+
+    if (!validName) return; // 중복 닉네임이거나 빈칸이면 시작 차단
+
+    startGame();
+  }
+
   function startGame() {
-    localStorage.setItem('space_ice_nickname', homeNickname.value);
     score = 0;
     scoreDisplay.textContent = score;
     stackedScoops = [];
@@ -579,7 +678,7 @@
     gameoverScreen.classList.add('hidden');
   }
 
-  startBtn.addEventListener('click', startGame);
+  startBtn.addEventListener('click', handleStartClick);
   restartBtn.addEventListener('click', startGame);
 
   function spawnScoop() {
@@ -686,7 +785,6 @@
           continue;
         }
 
-        // 바닥 추락 판정 (콘 윗면보다 아래로 내려가면 폭발)
         const floorY = cone.y + 40;
         if (s.y - s.radius > floorY) {
           createExplosion(s.x, cone.y + 20, s.type.base);
@@ -698,7 +796,7 @@
             finalScore.textContent = `${score}층`;
             gameoverScreen.classList.remove('hidden');
             
-            const nickname = homeNickname.value.trim() || "우주여행자";
+            const nickname = localStorage.getItem('space_ice_locked_nickname') || homeNickname.value.trim() || "우주여행자";
             if (window.saveScoreToCloud) {
               window.saveScoreToCloud(nickname, score);
             }
