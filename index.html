@@ -219,12 +219,6 @@
     .rank-item:last-child {
       border-bottom: none;
     }
-
-    .guide-text {
-      margin-top: 10px;
-      font-size: 12px;
-      color: #94a3b8;
-    }
   </style>
 </head>
 <body>
@@ -337,7 +331,6 @@
     }
   };
 
-  // 페이지 로드 시 랭킹 미리 불러오기
   window.loadRankings();
 </script>
 
@@ -365,30 +358,84 @@
   window.addEventListener('resize', resize);
   resize();
 
-  // 오디오 효과음 생성기 (웹 오디오 API)
   let audioCtx = null;
-  function playExplosionSound() {
+
+  // 1. 아이스크림이 툭 쌓일 때 나는 귀여운 방울/퐁실 효과음
+  function playCatchSound() {
     try {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume();
 
+      const t = audioCtx.currentTime;
       const osc = audioCtx.createOscillator();
       const gain = audioCtx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(120, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 0.6);
 
-      gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
-      gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+      osc.type = 'sine';
+      // 층수가 올라갈수록 음이 점점 높아지게 피치 조절 (성취감 부여)
+      const baseFreq = 400 + Math.min(score * 25, 600);
+      osc.frequency.setValueAtTime(baseFreq, t);
+      osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, t + 0.12);
+
+      gain.gain.setValueAtTime(0.3, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
 
       osc.connect(gain);
       gain.connect(audioCtx.destination);
-      osc.start();
-      osc.stop(audioCtx.currentTime + 0.6);
+      osc.start(t);
+      osc.stop(t + 0.15);
     } catch(e) {}
   }
 
-  // 다양한 행성 테마 정의 (색상, 무늬, 고리, 특수 효과)
+  // 2. 진짜 우주 대폭발 효과음
+  function playRealExplosionSound() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      const t = audioCtx.currentTime;
+
+      const osc = audioCtx.createOscillator();
+      const oscGain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(150, t);
+      osc.frequency.exponentialRampToValueAtTime(25, t + 0.5);
+
+      oscGain.gain.setValueAtTime(0.9, t);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+
+      osc.connect(oscGain);
+      oscGain.connect(audioCtx.destination);
+      osc.start(t);
+      osc.stop(t + 0.6);
+
+      const bufferSize = audioCtx.sampleRate * 0.7;
+      const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        data[i] = Math.random() * 2 - 1;
+      }
+
+      const noise = audioCtx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(800, t);
+      filter.frequency.linearRampToValueAtTime(100, t + 0.7);
+
+      const noiseGain = audioCtx.createGain();
+      noiseGain.gain.setValueAtTime(0.8, t);
+      noiseGain.gain.exponentialRampToValueAtTime(0.001, t + 0.7);
+
+      noise.connect(filter);
+      filter.connect(noiseGain);
+      noiseGain.connect(audioCtx.destination);
+
+      noise.start(t);
+      noise.stop(t + 0.7);
+    } catch(e) {}
+  }
+
   const PLANET_TYPES = [
     { name: 'earth', base: '#3b82f6', spot: '#22c55e', crater: '#1d4ed8', ring: false },
     { name: 'mars', base: '#ef4444', spot: '#b91c1c', crater: '#f87171', ring: false },
@@ -414,7 +461,6 @@
   let targetCameraY = 0;
   let shakeTime = 0;
 
-  // 콘 크기 최적화 (행성과 완벽한 너비 매칭)
   const cone = {
     x: width / 2,
     y: height - 95,
@@ -478,13 +524,12 @@
 
   function spawnScoop() {
     const type = PLANET_TYPES[Math.floor(Math.random() * PLANET_TYPES.length)];
-    const radius = 25; // 콘과 비율이 딱 맞는 크기
+    const radius = 25;
     const margin = radius + 15;
     const startX = margin + Math.random() * (width - margin * 2);
 
     const level = Math.min(score, 45);
     const fallSpeed = 3.4 + level * 0.12;
-    // 난이도가 올라갈수록 좌우 흔들림 폭과 빈도 증가
     const swayAmp = score >= 3 ? Math.min(65, (score - 2) * 2.8) : 0;
     const swaySpeed = 0.035 + level * 0.0012;
 
@@ -502,11 +547,11 @@
   }
 
   function createExplosion(x, y, color) {
-    shakeTime = 35; // 폭발 시 화면이 강하게 흔들림
-    playExplosionSound();
-    for (let i = 0; i < 65; i++) {
+    shakeTime = 38; 
+    playRealExplosionSound();
+    for (let i = 0; i < 70; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = Math.random() * 9 + 2;
+      const speed = Math.random() * 10 + 2;
       particles.push({
         x: x, y: y,
         vx: Math.cos(angle) * speed,
@@ -566,6 +611,7 @@
         const dx = Math.abs(s.x - targetX);
 
         if (dy < 20 && dx < catchRadius) {
+          playCatchSound(); // 아이스크림이 퐁 하고 쌓일 때 귀여운 효과음 재생
           const offsetX = Math.max(-18, Math.min(18, s.x - cone.x));
           stackedScoops.push({ offsetX: offsetX, radius: s.radius, type: s.type });
           fallingScoops.splice(i, 1);
@@ -591,12 +637,11 @@
             finalScore.textContent = `${score}층`;
             gameoverScreen.classList.remove('hidden');
             
-            // 클라우드 랭킹 전송 및 새로고침
             const nickname = homeNickname.value.trim() || "우주여행자";
             if (window.saveScoreToCloud) {
               window.saveScoreToCloud(nickname, score);
             }
-          }, 900);
+          }, 950);
           break;
         }
       }
@@ -668,7 +713,6 @@
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // 아이스크림 하단 물결 장식
     ctx.beginPath();
     ctx.arc(x - r * 0.5, y + r * 0.6, r * 0.25, 0, Math.PI * 2);
     ctx.arc(x, y + r * 0.68, r * 0.28, 0, Math.PI * 2);
@@ -676,7 +720,6 @@
     ctx.fillStyle = type.base;
     ctx.fill();
 
-    // 표면 크레이터 및 무늬
     ctx.fillStyle = type.crater;
     ctx.globalAlpha = 0.5;
     ctx.beginPath();
@@ -685,7 +728,6 @@
     ctx.fill();
     ctx.globalAlpha = 1.0;
 
-    // 행성 고리
     if (type.ring) {
       ctx.beginPath();
       ctx.ellipse(x, y, r * 1.5, r * 0.35, -0.25, 0, Math.PI * 2);
@@ -707,9 +749,8 @@
     });
 
     ctx.save();
-    // 난이도가 높거나 폭발할 때 화면 전체 진동 연출
     if (shakeTime > 0) {
-      const intensity = shakeTime > 20 ? 16 : 6;
+      const intensity = shakeTime > 20 ? 18 : 7;
       const dx = (Math.random() - 0.5) * intensity;
       const dy = (Math.random() - 0.5) * intensity;
       ctx.translate(dx, dy);
