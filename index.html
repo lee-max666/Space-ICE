@@ -186,6 +186,8 @@
       color: #fff;
       font-size: 15px;
       outline: none;
+      user-select: text;
+      -webkit-user-select: text;
     }
 
     .ranking-box {
@@ -243,8 +245,8 @@
     <div class="game-subtitle">콘 위에 행성을 차곡차곡 쌓아보세요!</div>
     
     <div class="input-group">
-      <label for="home-nickname">내 닉네임 설정</label>
-      <input type="text" id="home-nickname" placeholder="닉네임 입력 (예: 우주스타)" maxlength="10" value="우주여행자">
+      <label for="home-nickname">내 닉네임 설정 (최고 기록만 등록됩니다)</label>
+      <input type="text" id="home-nickname" placeholder="닉네임 입력 (예: 우주스타)" maxlength="10">
     </div>
 
     <div class="ranking-box">
@@ -262,7 +264,7 @@
     
     <div class="result-card">
       <div class="result-row">
-        <span>기록 층수</span>
+        <span>이번 기록</span>
         <span id="final-score">0층</span>
       </div>
     </div>
@@ -279,7 +281,9 @@
 <!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-  import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+  import { 
+    getFirestore, collection, addDoc, getDocs, query, where, orderBy, limit, updateDoc, deleteDoc, doc 
+  } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
   const firebaseConfig = {
     apiKey: "AIzaSyAPs75zTgv9NKVZnhub2CkmrgYzLTLiqyU",
@@ -294,14 +298,51 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  window.saveScoreToCloud = async function(name, score) {
-    if (!name.trim()) name = "무명 우주인";
+  // 동일 닉네임 중복 방지 및 최고 점수만 유지하는 저장 함수
+  window.saveScoreToCloud = async function(name, newScore) {
+    const cleanName = name.trim() || "우주여행자";
     try {
-      await addDoc(collection(db, "rankings"), {
-        name: name,
-        score: score,
-        timestamp: Date.now()
-      });
+      const rankingsRef = collection(db, "rankings");
+      const q = query(rankingsRef, where("name", "==", cleanName));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        // 해당 닉네임의 첫 기록인 경우 새로 등록
+        await addDoc(rankingsRef, {
+          name: cleanName,
+          score: newScore,
+          timestamp: Date.now()
+        });
+      } else {
+        // 기존 기록이 있는 경우 가장 높은 점수와 비교
+        let highestDoc = null;
+        let maxPrevScore = -1;
+        const docsToDelete = [];
+
+        snapshot.forEach((d) => {
+          const data = d.data();
+          if (data.score > maxPrevScore) {
+            if (highestDoc) docsToDelete.push(highestDoc.id);
+            maxPrevScore = data.score;
+            highestDoc = d;
+          } else {
+            docsToDelete.push(d.id);
+          }
+        });
+
+        // 예전에 쌓인 중복 데이터 정리
+        for (const id of docsToDelete) {
+          await deleteDoc(doc(db, "rankings", id));
+        }
+
+        // 이번 점수가 기존 최고 점수보다 높을 때만 업데이트
+        if (highestDoc && newScore > maxPrevScore) {
+          await updateDoc(doc(db, "rankings", highestDoc.id), {
+            score: newScore,
+            timestamp: Date.now()
+          });
+        }
+      }
       loadRankings();
     } catch (e) {
       console.error("랭킹 저장 오류:", e);
@@ -313,17 +354,28 @@
     listEls.forEach(el => { if(el) el.innerHTML = '<div style="color: #94a3b8; font-size: 12px;">랭킹 불러오는 중...</div>'; });
     
     try {
-      const q = query(collection(db, "rankings"), orderBy("score", "desc"), limit(5));
+      const q = query(collection(db, "rankings"), orderBy("score", "desc"), limit(30));
       const querySnapshot = await getDocs(q);
-      let html = "";
-      let rank = 1;
-      querySnapshot.forEach((doc) => {
-        const data = doc.data();
-        html += `<div class="rank-item"><span>${rank}. ${data.name}</span><span>${data.score}층</span></div>`;
-        rank++;
-      });
-      if (html === "") html = '<div style="color: #94a3b8; font-size: 12px;">아직 기록이 없습니다! 첫 기록을 남겨보세요!</div>';
       
+      // 닉네임별 최고 기록 1개씩만 필터링
+      const uniqueMap = new Map();
+      querySnapshot.forEach((docSnap) => {
+        const data = docSnap.data();
+        if (!uniqueMap.has(data.name) || uniqueMap.get(data.name).score < data.score) {
+          uniqueMap.set(data.name, data);
+        }
+      });
+
+      const sortedList = Array.from(uniqueMap.values())
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5);
+
+      let html = "";
+      sortedList.forEach((data, idx) => {
+        html += `<div class="rank-item"><span>${idx + 1}. ${data.name}</span><span>${data.score}층</span></div>`;
+      });
+
+      if (html === "") html = '<div style="color: #94a3b8; font-size: 12px;">아직 기록이 없습니다! 첫 기록을 남겨보세요!</div>';
       listEls.forEach(el => { if(el) el.innerHTML = html; });
     } catch (e) {
       console.error("랭킹 로드 오류:", e);
@@ -348,6 +400,13 @@
   const restartBtn = document.getElementById('restart-btn');
   const homeNickname = document.getElementById('home-nickname');
 
+  // 마지막으로 사용한 닉네임 불러오기
+  const savedNick = localStorage.getItem('space_ice_nickname');
+  homeNickname.value = savedNick ? savedNick : "우주여행자";
+  homeNickname.addEventListener('input', () => {
+    localStorage.setItem('space_ice_nickname', homeNickname.value);
+  });
+
   let width, height;
   function resize() {
     width = container.clientWidth;
@@ -360,7 +419,6 @@
 
   let audioCtx = null;
 
-  // 1. 아이스크림이 툭 쌓일 때 나는 귀여운 방울/퐁실 효과음
   function playCatchSound() {
     try {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -371,7 +429,6 @@
       const gain = audioCtx.createGain();
 
       osc.type = 'sine';
-      // 층수가 올라갈수록 음이 점점 높아지게 피치 조절 (성취감 부여)
       const baseFreq = 400 + Math.min(score * 25, 600);
       osc.frequency.setValueAtTime(baseFreq, t);
       osc.frequency.exponentialRampToValueAtTime(baseFreq * 1.5, t + 0.12);
@@ -386,7 +443,6 @@
     } catch(e) {}
   }
 
-  // 2. 진짜 우주 대폭발 효과음
   function playRealExplosionSound() {
     try {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -501,6 +557,7 @@
   }, { passive: true });
 
   function startGame() {
+    localStorage.setItem('space_ice_nickname', homeNickname.value);
     score = 0;
     scoreDisplay.textContent = score;
     stackedScoops = [];
@@ -611,7 +668,7 @@
         const dx = Math.abs(s.x - targetX);
 
         if (dy < 20 && dx < catchRadius) {
-          playCatchSound(); // 아이스크림이 퐁 하고 쌓일 때 귀여운 효과음 재생
+          playCatchSound();
           const offsetX = Math.max(-18, Math.min(18, s.x - cone.x));
           stackedScoops.push({ offsetX: offsetX, radius: s.radius, type: s.type });
           fallingScoops.splice(i, 1);
