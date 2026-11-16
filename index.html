@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Space ice - 우주 아이스크림 쌓기</title>
   
-  <!-- 링크 공유 미리보기 설정 -->
   <meta property="og:type" content="website">
   <meta property="og:title" content="Space ice - 우주 아이스크림 쌓기">
   <meta property="og:description" content="콘 위에 행성을 차곡차곡!">
@@ -90,7 +89,7 @@
     .overlay {
       position: absolute;
       inset: 0;
-      background: rgba(5, 7, 18, 0.86);
+      background: rgba(5, 7, 18, 0.88);
       backdrop-filter: blur(6px);
       display: flex;
       flex-direction: column;
@@ -111,16 +110,16 @@
       font-size: 36px;
       font-weight: 900;
       letter-spacing: -0.5px;
-      margin-bottom: 6px;
+      margin-bottom: 4px;
       background: linear-gradient(135deg, #a8ff78, #78ffd6);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
     .game-subtitle {
-      font-size: 14px;
+      font-size: 13px;
       color: #cbd5e1;
-      margin-bottom: 20px;
+      margin-bottom: 14px;
       line-height: 1.4;
     }
 
@@ -128,14 +127,14 @@
       background: linear-gradient(135deg, #6DB95A, #4A7C59);
       color: #ffffff;
       border: none;
-      padding: 13px 36px;
+      padding: 12px 36px;
       font-size: 16px;
       font-weight: 700;
       border-radius: 30px;
       cursor: pointer;
       box-shadow: 0 6px 20px rgba(74, 124, 89, 0.45);
       transition: transform 0.15s ease;
-      margin-top: 10px;
+      margin-top: 8px;
     }
 
     .btn:active {
@@ -145,9 +144,9 @@
     .result-card {
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 14px;
-      padding: 14px 20px;
-      margin-bottom: 15px;
+      border-radius: 12px;
+      padding: 10px 20px;
+      margin-bottom: 10px;
       width: 100%;
       max-width: 290px;
     }
@@ -155,7 +154,7 @@
     .result-row {
       display: flex;
       justify-content: space-between;
-      margin: 6px 0;
+      margin: 4px 0;
       font-size: 15px;
     }
 
@@ -164,9 +163,8 @@
       color: #ffd166;
     }
 
-    /* 닉네임 입력 및 랭킹 스타일 */
     .input-group {
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       width: 100%;
       max-width: 290px;
       text-align: left;
@@ -176,12 +174,12 @@
       font-size: 12px;
       color: #94a3b8;
       display: block;
-      margin-bottom: 4px;
+      margin-bottom: 3px;
     }
 
     .input-group input {
       width: 100%;
-      padding: 10px 14px;
+      padding: 9px 12px;
       border-radius: 10px;
       border: 1px solid rgba(255, 255, 255, 0.2);
       background: rgba(0, 0, 0, 0.4);
@@ -193,12 +191,12 @@
     .ranking-box {
       width: 100%;
       max-width: 290px;
-      background: rgba(0, 0, 0, 0.3);
+      background: rgba(0, 0, 0, 0.35);
       border: 1px solid rgba(255, 255, 255, 0.1);
       border-radius: 12px;
       padding: 10px 14px;
-      margin-bottom: 15px;
-      max-height: 140px;
+      margin-bottom: 12px;
+      max-height: 130px;
       overflow-y: auto;
     }
 
@@ -207,7 +205,6 @@
       font-weight: 700;
       color: #ffd166;
       margin-bottom: 6px;
-      letter-spacing: 0.5px;
     }
 
     .rank-item {
@@ -224,7 +221,7 @@
     }
 
     .guide-text {
-      margin-top: 14px;
+      margin-top: 10px;
       font-size: 12px;
       color: #94a3b8;
     }
@@ -246,46 +243,50 @@
 
   <canvas id="gameCanvas"></canvas>
 
-  <!-- 시작 화면 -->
+  <!-- 홈 / 대기 화면 -->
   <div id="start-screen" class="overlay">
     <div class="game-title">Space ice</div>
-    <div class="game-subtitle">콘 위에 행성을 차곡차곡!<br>바닥에 떨어지면 폭발합니다.</div>
+    <div class="game-subtitle">콘 위에 행성을 차곡차곡 쌓아보세요!</div>
+    
+    <div class="input-group">
+      <label for="home-nickname">내 닉네임 설정</label>
+      <input type="text" id="home-nickname" placeholder="닉네임 입력 (예: 우주스타)" maxlength="10" value="우주여행자">
+    </div>
+
+    <div class="ranking-box">
+      <div class="ranking-title">🏆 실시간 친구 랭킹 TOP 5</div>
+      <div id="home-ranking-list" style="color: #94a3b8; font-size: 12px;">랭킹 불러오는 중...</div>
+    </div>
+
     <button class="btn" id="start-btn">게임 시작</button>
-    <div class="guide-text">마우스 이동 또는 화면 터치 드래그로 조작</div>
   </div>
 
   <!-- 게임 오버 화면 -->
   <div id="gameover-screen" class="overlay hidden">
     <div class="game-title" style="background: linear-gradient(135deg, #ff758c, #ff7eb3); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">BOOM!</div>
-    <div class="game-subtitle">행성이 우주 바닥에 충돌했습니다</div>
+    <div class="game-subtitle">행성이 우주 바닥에 충돌하여 폭발했습니다!</div>
     
     <div class="result-card">
       <div class="result-row">
-        <span>이번 기록</span>
+        <span>기록 층수</span>
         <span id="final-score">0층</span>
       </div>
     </div>
 
-    <div class="input-group">
-      <label for="nickname-input">친구들과 공유할 닉네임</label>
-      <input type="text" id="nickname-input" placeholder="닉네임 입력 (예: 우주스타)" maxlength="10">
-    </div>
-
     <div class="ranking-box">
-      <div class="ranking-title">🏆 친구들 실시간 랭킹 TOP 5</div>
-      <div id="ranking-list" style="color: #94a3b8; font-size: 12px;">랭킹 불러오는 중...</div>
+      <div class="ranking-title">🏆 실시간 친구 랭킹 TOP 5</div>
+      <div id="gameover-ranking-list" style="color: #94a3b8; font-size: 12px;">랭킹 불러오는 중...</div>
     </div>
 
     <button class="btn" id="restart-btn" style="margin-top:0;">다시 도전하기</button>
   </div>
 </div>
 
-<!-- Firebase SDK (Modular v9) -->
+<!-- Firebase SDK -->
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
-  import { getFirestore, collection, add슐, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+  import { getFirestore, collection, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-  // 사용자가 제공한 파이어베이스 설정
   const firebaseConfig = {
     apiKey: "AIzaSyAPs75zTgv9NKVZnhub2CkmrgYzLTLiqyU",
     authDomain: "space-1ce.firebaseapp.com",
@@ -299,7 +300,6 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // 전역 함수로 랭킹 저장 및 불러오기 등록
   window.saveScoreToCloud = async function(name, score) {
     if (!name.trim()) name = "무명 우주인";
     try {
@@ -315,8 +315,9 @@
   };
 
   window.loadRankings = async function() {
-    const listEl = document.getElementById('ranking-list');
-    listEl.innerHTML = '<div style="color: #94a3b8; font-size: 12px;">랭킹 불러오는 중...</div>';
+    const listEls = [document.getElementById('home-ranking-list'), document.getElementById('gameover-ranking-list')];
+    listEls.forEach(el => { if(el) el.innerHTML = '<div style="color: #94a3b8; font-size: 12px;">랭킹 불러오는 중...</div>'; });
+    
     try {
       const q = query(collection(db, "rankings"), orderBy("score", "desc"), limit(5));
       const querySnapshot = await getDocs(q);
@@ -327,13 +328,17 @@
         html += `<div class="rank-item"><span>${rank}. ${data.name}</span><span>${data.score}층</span></div>`;
         rank++;
       });
-      if (html === "") html = '<div style="color: #94a3b8; font-size: 12px;">아직 기록이 없습니다!</div>';
-      listEl.innerHTML = html;
+      if (html === "") html = '<div style="color: #94a3b8; font-size: 12px;">아직 기록이 없습니다! 첫 기록을 남겨보세요!</div>';
+      
+      listEls.forEach(el => { if(el) el.innerHTML = html; });
     } catch (e) {
       console.error("랭킹 로드 오류:", e);
-      listEl.innerHTML = '<div style="color: #ff6b6b; font-size: 12px;">랭킹 불러오기 실패</div>';
+      listEls.forEach(el => { if(el) el.innerHTML = '<div style="color: #ff6b6b; font-size: 12px;">랭킹 불러오기 실패</div>'; });
     }
   };
+
+  // 페이지 로드 시 랭킹 미리 불러오기
+  window.loadRankings();
 </script>
 
 <script>
@@ -348,7 +353,7 @@
   const finalScore = document.getElementById('final-score');
   const startBtn = document.getElementById('start-btn');
   const restartBtn = document.getElementById('restart-btn');
-  const nicknameInput = document.getElementById('nickname-input');
+  const homeNickname = document.getElementById('home-nickname');
 
   let width, height;
   function resize() {
@@ -360,12 +365,39 @@
   window.addEventListener('resize', resize);
   resize();
 
+  // 오디오 효과음 생성기 (웹 오디오 API)
+  let audioCtx = null;
+  function playExplosionSound() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') audioCtx.resume();
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(120, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(20, audioCtx.currentTime + 0.6);
+
+      gain.gain.setValueAtTime(0.6, audioCtx.currentTime);
+      gain.gain.linearRampToValueAtTime(0.01, audioCtx.currentTime + 0.6);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.6);
+    } catch(e) {}
+  }
+
+  // 다양한 행성 테마 정의 (색상, 무늬, 고리, 특수 효과)
   const PLANET_TYPES = [
-    { name: 'mint-earth', base: '#6DB95A', spot: '#3b82f6', crater: '#4A7C59', ring: false },
-    { name: 'strawberry-mars', base: '#ff6b6b', spot: '#c92a2a', crater: '#ffa8a8', ring: false },
-    { name: 'vanilla-moon', base: '#f8f9fa', spot: '#dee2e6', crater: '#adb5bd', ring: false },
-    { name: 'choco-saturn', base: '#d97706', spot: '#92400e', crater: '#fbbf24', ring: true, ringColor: 'rgba(253, 224, 71, 0.65)' },
-    { name: 'berry-uranus', base: '#a855f7', spot: '#6b21a8', crater: '#d8b4fe', ring: true, ringColor: 'rgba(216, 180, 254, 0.55)' }
+    { name: 'earth', base: '#3b82f6', spot: '#22c55e', crater: '#1d4ed8', ring: false },
+    { name: 'mars', base: '#ef4444', spot: '#b91c1c', crater: '#f87171', ring: false },
+    { name: 'moon', base: '#94a3b8', spot: '#64748b', crater: '#cbd5e1', ring: false },
+    { name: 'saturn', base: '#f59e0b', spot: '#b45309', crater: '#fbbf24', ring: true, ringColor: 'rgba(252, 211, 77, 0.7)' },
+    { name: 'jupiter', base: '#d97706', spot: '#78350f', crater: '#f59e0b', ring: false },
+    { name: 'uranus', base: '#06b6d4', spot: '#0e7490', crater: '#67e8f9', ring: true, ringColor: 'rgba(103, 232, 249, 0.6)' },
+    { name: 'neptune', base: '#6366f1', spot: '#312e81', crater: '#818cf8', ring: false },
+    { name: 'venus', base: '#ec4899', spot: '#9d174d', crater: '#f472b6', ring: false }
   ];
 
   let gameState = 'START';
@@ -382,17 +414,18 @@
   let targetCameraY = 0;
   let shakeTime = 0;
 
+  // 콘 크기 최적화 (행성과 완벽한 너비 매칭)
   const cone = {
     x: width / 2,
     y: height - 95,
-    topWidth: 68,
-    height: 85,
+    topWidth: 46,
+    height: 80,
     targetX: width / 2
   };
 
   function initStars() {
     stars = [];
-    for (let i = 0; i < 65; i++) {
+    for (let i = 0; i < 70; i++) {
       stars.push({
         x: Math.random() * width,
         y: Math.random() * height,
@@ -407,7 +440,7 @@
   function updateTargetX(clientX) {
     const rect = canvas.getBoundingClientRect();
     let relX = clientX - rect.left;
-    const margin = cone.topWidth / 2 + 10;
+    const margin = 26;
     cone.targetX = Math.max(margin, Math.min(width - margin, relX));
   }
 
@@ -433,7 +466,7 @@
     cone.x = width / 2;
     cone.targetX = width / 2;
     cone.y = height - 95;
-    spawnTimer = 30;
+    spawnTimer = 25;
     gameState = 'PLAYING';
 
     startScreen.classList.add('hidden');
@@ -445,14 +478,15 @@
 
   function spawnScoop() {
     const type = PLANET_TYPES[Math.floor(Math.random() * PLANET_TYPES.length)];
-    const radius = 29;
-    const margin = radius + 24;
+    const radius = 25; // 콘과 비율이 딱 맞는 크기
+    const margin = radius + 15;
     const startX = margin + Math.random() * (width - margin * 2);
 
-    const level = Math.min(score, 40);
-    const fallSpeed = 3.2 + level * 0.13;
-    const swayAmp = score >= 5 ? Math.min(55, (score - 4) * 2.2) : 0;
-    const swaySpeed = 0.03 + level * 0.001;
+    const level = Math.min(score, 45);
+    const fallSpeed = 3.4 + level * 0.12;
+    // 난이도가 올라갈수록 좌우 흔들림 폭과 빈도 증가
+    const swayAmp = score >= 3 ? Math.min(65, (score - 2) * 2.8) : 0;
+    const swaySpeed = 0.035 + level * 0.0012;
 
     fallingScoops.push({
       x: startX,
@@ -468,18 +502,19 @@
   }
 
   function createExplosion(x, y, color) {
-    shakeTime = 22;
-    for (let i = 0; i < 48; i++) {
+    shakeTime = 35; // 폭발 시 화면이 강하게 흔들림
+    playExplosionSound();
+    for (let i = 0; i < 65; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = Math.random() * 7 + 2;
+      const speed = Math.random() * 9 + 2;
       particles.push({
         x: x, y: y,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed - 2,
-        size: Math.random() * 6 + 2,
-        color: i % 3 === 0 ? '#ff4d4f' : (i % 3 === 1 ? '#ffd166' : color),
+        size: Math.random() * 7 + 2,
+        color: i % 4 === 0 ? '#ff4d4f' : (i % 4 === 1 ? '#ffd166' : (i % 4 === 2 ? '#ffffff' : color)),
         life: 1.0,
-        decay: Math.random() * 0.025 + 0.015
+        decay: Math.random() * 0.02 + 0.012
       });
     }
   }
@@ -493,15 +528,15 @@
     if (shakeTime > 0) shakeTime--;
 
     if (gameState === 'PLAYING') {
-      cone.x += (cone.targetX - cone.x) * 0.28;
+      cone.x += (cone.targetX - cone.x) * 0.3;
 
       spawnTimer--;
       if (spawnTimer <= 0) {
         spawnScoop();
-        spawnTimer = Math.max(48, 105 - score * 1.8);
+        spawnTimer = Math.max(42, 100 - score * 1.7);
       }
 
-      const stackHeight = stackedScoops.length * 36;
+      const stackHeight = stackedScoops.length * 32;
       if (stackHeight > height * 0.35) {
         targetCameraY = stackHeight - height * 0.35;
       }
@@ -513,25 +548,25 @@
         s.angle += s.swaySpeed;
         if (s.swayAmp > 0) {
           s.x = s.baseX + Math.sin(s.angle) * s.swayAmp;
-          s.x = Math.max(s.radius + 10, Math.min(width - s.radius - 10, s.x));
+          s.x = Math.max(s.radius + 8, Math.min(width - s.radius - 8, s.x));
         }
 
         let targetY = cone.y;
         let targetX = cone.x;
-        let catchRadius = cone.topWidth * 0.55;
+        let catchRadius = cone.topWidth * 0.65;
 
         if (stackedScoops.length > 0) {
           const topScoop = stackedScoops[stackedScoops.length - 1];
-          targetY = cone.y - stackedScoops.length * 36;
+          targetY = cone.y - stackedScoops.length * 32;
           targetX = cone.x + topScoop.offsetX;
-          catchRadius = topScoop.radius * 0.88;
+          catchRadius = topScoop.radius * 0.9;
         }
 
         const dy = Math.abs(s.y - targetY);
         const dx = Math.abs(s.x - targetX);
 
-        if (dy < 22 && dx < catchRadius) {
-          const offsetX = Math.max(-22, Math.min(22, s.x - cone.x));
+        if (dy < 20 && dx < catchRadius) {
+          const offsetX = Math.max(-18, Math.min(18, s.x - cone.x));
           stackedScoops.push({ offsetX: offsetX, radius: s.radius, type: s.type });
           fallingScoops.splice(i, 1);
 
@@ -545,7 +580,7 @@
           continue;
         }
 
-        const floorY = height - cameraY + 10;
+        const floorY = height - cameraY + 15;
         if (s.y - s.radius > floorY) {
           createExplosion(s.x, height - cameraY - 15, s.type.base);
           fallingScoops.splice(i, 1);
@@ -556,11 +591,12 @@
             finalScore.textContent = `${score}층`;
             gameoverScreen.classList.remove('hidden');
             
-            // 점수 클라우드에 전송 및 랭킹 불러오기
+            // 클라우드 랭킹 전송 및 새로고침
+            const nickname = homeNickname.value.trim() || "우주여행자";
             if (window.saveScoreToCloud) {
-              window.saveScoreToCloud(nicknameInput.value, score);
+              window.saveScoreToCloud(nickname, score);
             }
-          }, 850);
+          }, 900);
           break;
         }
       }
@@ -570,7 +606,7 @@
       const p = particles[i];
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.18;
+      p.vy += 0.16;
       p.life -= p.decay;
       if (p.life <= 0) particles.splice(i, 1);
     }
@@ -595,24 +631,24 @@
     ctx.fill();
 
     ctx.clip();
-    ctx.strokeStyle = 'rgba(120, 63, 18, 0.35)';
+    ctx.strokeStyle = 'rgba(120, 63, 18, 0.4)';
     ctx.lineWidth = 2;
 
-    for (let i = -h; i < h * 2; i += 14) {
+    for (let i = -h; i < h * 2; i += 12) {
       ctx.beginPath();
       ctx.moveTo(x - halfW - 10, y + i);
-      ctx.lineTo(x + halfW + 10, y + i + 45);
+      ctx.lineTo(x + halfW + 10, y + i + 40);
       ctx.stroke();
 
       ctx.beginPath();
       ctx.moveTo(x + halfW + 10, y + i);
-      ctx.lineTo(x - halfW - 10, y + i + 45);
+      ctx.lineTo(x - halfW - 10, y + i + 40);
       ctx.stroke();
     }
 
     ctx.restore();
     ctx.beginPath();
-    ctx.ellipse(x, y, halfW, 6, 0, 0, Math.PI * 2);
+    ctx.ellipse(x, y, halfW, 5, 0, 0, Math.PI * 2);
     ctx.fillStyle = '#e5a962';
     ctx.fill();
     ctx.strokeStyle = '#9c5d23';
@@ -624,7 +660,7 @@
     ctx.save();
     const grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
     grad.addColorStop(0, '#ffffff');
-    grad.addColorStop(0.25, type.base);
+    grad.addColorStop(0.3, type.base);
     grad.addColorStop(1, type.spot);
 
     ctx.beginPath();
@@ -632,27 +668,29 @@
     ctx.fillStyle = grad;
     ctx.fill();
 
+    // 아이스크림 하단 물결 장식
     ctx.beginPath();
-    ctx.arc(x - r * 0.55, y + r * 0.65, r * 0.28, 0, Math.PI * 2);
-    ctx.arc(x, y + r * 0.72, r * 0.3, 0, Math.PI * 2);
-    ctx.arc(x + r * 0.55, y + r * 0.65, r * 0.28, 0, Math.PI * 2);
+    ctx.arc(x - r * 0.5, y + r * 0.6, r * 0.25, 0, Math.PI * 2);
+    ctx.arc(x, y + r * 0.68, r * 0.28, 0, Math.PI * 2);
+    ctx.arc(x + r * 0.5, y + r * 0.6, r * 0.25, 0, Math.PI * 2);
     ctx.fillStyle = type.base;
     ctx.fill();
 
+    // 표면 크레이터 및 무늬
     ctx.fillStyle = type.crater;
-    ctx.globalAlpha = 0.45;
+    ctx.globalAlpha = 0.5;
     ctx.beginPath();
-    ctx.arc(x - r * 0.35, y - r * 0.15, r * 0.18, 0, Math.PI * 2);
-    ctx.arc(x + r * 0.3, y + r * 0.15, r * 0.22, 0, Math.PI * 2);
-    ctx.arc(x + r * 0.1, y - r * 0.45, r * 0.12, 0, Math.PI * 2);
+    ctx.arc(x - r * 0.3, y - r * 0.2, r * 0.16, 0, Math.PI * 2);
+    ctx.arc(x + r * 0.25, y + r * 0.2, r * 0.2, 0, Math.PI * 2);
     ctx.fill();
     ctx.globalAlpha = 1.0;
 
+    // 행성 고리
     if (type.ring) {
       ctx.beginPath();
-      ctx.ellipse(x, y, r * 1.55, r * 0.38, -0.22, 0, Math.PI * 2);
+      ctx.ellipse(x, y, r * 1.5, r * 0.35, -0.25, 0, Math.PI * 2);
       ctx.strokeStyle = type.ringColor;
-      ctx.lineWidth = 5;
+      ctx.lineWidth = 4.5;
       ctx.stroke();
     }
     ctx.restore();
@@ -669,9 +707,11 @@
     });
 
     ctx.save();
+    // 난이도가 높거나 폭발할 때 화면 전체 진동 연출
     if (shakeTime > 0) {
-      const dx = (Math.random() - 0.5) * 14;
-      const dy = (Math.random() - 0.5) * 14;
+      const intensity = shakeTime > 20 ? 16 : 6;
+      const dx = (Math.random() - 0.5) * intensity;
+      const dy = (Math.random() - 0.5) * intensity;
       ctx.translate(dx, dy);
     }
 
@@ -680,9 +720,9 @@
     drawCone(cone.x, cone.y);
 
     stackedScoops.forEach((scoop, index) => {
-      const sway = Math.sin(Date.now() * 0.003 + index * 0.4) * Math.min(4, index * 0.25);
+      const sway = Math.sin(Date.now() * 0.0035 + index * 0.4) * Math.min(3.5, index * 0.2);
       const sx = cone.x + scoop.offsetX + sway;
-      const sy = cone.y - (index + 1) * 36 + 10;
+      const sy = cone.y - (index + 1) * 32 + 8;
       drawPlanetScoop(sx, sy, scoop.radius, scoop.type);
     });
 
