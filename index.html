@@ -24,6 +24,7 @@
       justify-content: center;
       align-items: center;
       min-height: 100vh;
+      min-height: 100dvh;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       overflow: hidden;
     }
@@ -33,6 +34,7 @@
       width: 100%;
       max-width: 420px;
       height: 100vh;
+      height: 100dvh;
       max-height: 820px;
       background: radial-gradient(circle at 50% 20%, #161b3a 0%, #090b1a 70%, #04050c 100%);
       overflow: hidden;
@@ -298,7 +300,6 @@
   const app = initializeApp(firebaseConfig);
   const db = getFirestore(app);
 
-  // 동일 닉네임 중복 방지 및 최고 점수만 유지하는 저장 함수
   window.saveScoreToCloud = async function(name, newScore) {
     const cleanName = name.trim() || "우주여행자";
     try {
@@ -307,14 +308,12 @@
       const snapshot = await getDocs(q);
 
       if (snapshot.empty) {
-        // 해당 닉네임의 첫 기록인 경우 새로 등록
         await addDoc(rankingsRef, {
           name: cleanName,
           score: newScore,
           timestamp: Date.now()
         });
       } else {
-        // 기존 기록이 있는 경우 가장 높은 점수와 비교
         let highestDoc = null;
         let maxPrevScore = -1;
         const docsToDelete = [];
@@ -330,12 +329,10 @@
           }
         });
 
-        // 예전에 쌓인 중복 데이터 정리
         for (const id of docsToDelete) {
           await deleteDoc(doc(db, "rankings", id));
         }
 
-        // 이번 점수가 기존 최고 점수보다 높을 때만 업데이트
         if (highestDoc && newScore > maxPrevScore) {
           await updateDoc(doc(db, "rankings", highestDoc.id), {
             score: newScore,
@@ -357,7 +354,6 @@
       const q = query(collection(db, "rankings"), orderBy("score", "desc"), limit(30));
       const querySnapshot = await getDocs(q);
       
-      // 닉네임별 최고 기록 1개씩만 필터링
       const uniqueMap = new Map();
       querySnapshot.forEach((docSnap) => {
         const data = docSnap.data();
@@ -400,12 +396,22 @@
   const restartBtn = document.getElementById('restart-btn');
   const homeNickname = document.getElementById('home-nickname');
 
-  // 마지막으로 사용한 닉네임 불러오기
   const savedNick = localStorage.getItem('space_ice_nickname');
   homeNickname.value = savedNick ? savedNick : "우주여행자";
   homeNickname.addEventListener('input', () => {
     localStorage.setItem('space_ice_nickname', homeNickname.value);
   });
+
+  // 모바일 하단 여백을 충분히 확보하도록 콘 Y 위치 상향 (height - 135)
+  const CONE_BOTTOM_OFFSET = 135;
+
+  const cone = {
+    x: 0,
+    y: 0,
+    topWidth: 46,
+    height: 80,
+    targetX: 0
+  };
 
   let width, height;
   function resize() {
@@ -413,6 +419,11 @@
     height = container.clientHeight;
     canvas.width = width;
     canvas.height = height;
+    cone.y = height - CONE_BOTTOM_OFFSET;
+    if (cone.x === 0) {
+      cone.x = width / 2;
+      cone.targetX = width / 2;
+    }
   }
   window.addEventListener('resize', resize);
   resize();
@@ -517,14 +528,6 @@
   let targetCameraY = 0;
   let shakeTime = 0;
 
-  const cone = {
-    x: width / 2,
-    y: height - 95,
-    topWidth: 46,
-    height: 80,
-    targetX: width / 2
-  };
-
   function initStars() {
     stars = [];
     for (let i = 0; i < 70; i++) {
@@ -568,7 +571,7 @@
     shakeTime = 0;
     cone.x = width / 2;
     cone.targetX = width / 2;
-    cone.y = height - 95;
+    cone.y = height - CONE_BOTTOM_OFFSET;
     spawnTimer = 25;
     gameState = 'PLAYING';
 
@@ -683,9 +686,10 @@
           continue;
         }
 
-        const floorY = height - cameraY + 15;
+        // 바닥 추락 판정 (콘 윗면보다 아래로 내려가면 폭발)
+        const floorY = cone.y + 40;
         if (s.y - s.radius > floorY) {
-          createExplosion(s.x, height - cameraY - 15, s.type.base);
+          createExplosion(s.x, cone.y + 20, s.type.base);
           fallingScoops.splice(i, 1);
           gameState = 'EXPLODING';
 
