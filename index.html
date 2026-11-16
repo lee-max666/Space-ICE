@@ -29,7 +29,6 @@
       overflow: hidden;
     }
 
-    /* 모바일 퍼스트 컨테이너 */
     #game-container {
       position: relative;
       width: 100%;
@@ -48,7 +47,6 @@
       touch-action: none;
     }
 
-    /* 상단 점수판 */
     #hud {
       position: absolute;
       top: 20px;
@@ -89,20 +87,20 @@
       font-weight: 700;
     }
 
-    /* 시작 & 게임오버 오버레이 */
     .overlay {
       position: absolute;
       inset: 0;
-      background: rgba(5, 7, 18, 0.78);
-      backdrop-filter: blur(4px);
+      background: rgba(5, 7, 18, 0.86);
+      backdrop-filter: blur(6px);
       display: flex;
       flex-direction: column;
       justify-content: center;
       align-items: center;
       text-align: center;
-      padding: 24px;
+      padding: 20px;
       z-index: 10;
       color: #ffffff;
+      overflow-y: auto;
     }
 
     .hidden {
@@ -110,33 +108,34 @@
     }
 
     .game-title {
-      font-size: 38px;
+      font-size: 36px;
       font-weight: 900;
       letter-spacing: -0.5px;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
       background: linear-gradient(135deg, #a8ff78, #78ffd6);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
 
     .game-subtitle {
-      font-size: 15px;
+      font-size: 14px;
       color: #cbd5e1;
-      margin-bottom: 32px;
-      line-height: 1.5;
+      margin-bottom: 20px;
+      line-height: 1.4;
     }
 
     .btn {
       background: linear-gradient(135deg, #6DB95A, #4A7C59);
       color: #ffffff;
       border: none;
-      padding: 15px 40px;
-      font-size: 17px;
+      padding: 13px 36px;
+      font-size: 16px;
       font-weight: 700;
       border-radius: 30px;
       cursor: pointer;
       box-shadow: 0 6px 20px rgba(74, 124, 89, 0.45);
       transition: transform 0.15s ease;
+      margin-top: 10px;
     }
 
     .btn:active {
@@ -146,18 +145,18 @@
     .result-card {
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 16px;
-      padding: 20px 32px;
-      margin-bottom: 28px;
+      border-radius: 14px;
+      padding: 14px 20px;
+      margin-bottom: 15px;
       width: 100%;
-      max-width: 280px;
+      max-width: 290px;
     }
 
     .result-row {
       display: flex;
       justify-content: space-between;
-      margin: 8px 0;
-      font-size: 16px;
+      margin: 6px 0;
+      font-size: 15px;
     }
 
     .result-row span:last-child {
@@ -165,9 +164,68 @@
       color: #ffd166;
     }
 
-    .guide-text {
-      margin-top: 18px;
+    /* 닉네임 입력 및 랭킹 스타일 */
+    .input-group {
+      margin-bottom: 12px;
+      width: 100%;
+      max-width: 290px;
+      text-align: left;
+    }
+
+    .input-group label {
+      font-size: 12px;
+      color: #94a3b8;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.4);
+      color: #fff;
+      font-size: 15px;
+      outline: none;
+    }
+
+    .ranking-box {
+      width: 100%;
+      max-width: 290px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 10px 14px;
+      margin-bottom: 15px;
+      max-height: 140px;
+      overflow-y: auto;
+    }
+
+    .ranking-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: #ffd166;
+      margin-bottom: 6px;
+      letter-spacing: 0.5px;
+    }
+
+    .rank-item {
+      display: flex;
+      justify-content: space-between;
       font-size: 13px;
+      padding: 3px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      color: #e2e8f0;
+    }
+
+    .rank-item:last-child {
+      border-bottom: none;
+    }
+
+    .guide-text {
+      margin-top: 14px;
+      font-size: 12px;
       color: #94a3b8;
     }
   </style>
@@ -200,34 +258,97 @@
   <div id="gameover-screen" class="overlay hidden">
     <div class="game-title" style="background: linear-gradient(135deg, #ff758c, #ff7eb3); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">BOOM!</div>
     <div class="game-subtitle">행성이 우주 바닥에 충돌했습니다</div>
+    
     <div class="result-card">
       <div class="result-row">
-        <span>쌓은 층수</span>
+        <span>이번 기록</span>
         <span id="final-score">0층</span>
       </div>
-      <div class="result-row">
-        <span>최고 기록</span>
-        <span id="final-best">0층</span>
-      </div>
     </div>
-    <button class="btn" id="restart-btn">다시 도전하기</button>
+
+    <div class="input-group">
+      <label for="nickname-input">친구들과 공유할 닉네임</label>
+      <input type="text" id="nickname-input" placeholder="닉네임 입력 (예: 우주스타)" maxlength="10">
+    </div>
+
+    <div class="ranking-box">
+      <div class="ranking-title">🏆 친구들 실시간 랭킹 TOP 5</div>
+      <div id="ranking-list" style="color: #94a3b8; font-size: 12px;">랭킹 불러오는 중...</div>
+    </div>
+
+    <button class="btn" id="restart-btn" style="margin-top:0;">다시 도전하기</button>
   </div>
 </div>
+
+<!-- Firebase SDK (Modular v9) -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js";
+  import { getFirestore, collection, add슐, addDoc, getDocs, query, orderBy, limit } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+
+  // 사용자가 제공한 파이어베이스 설정
+  const firebaseConfig = {
+    apiKey: "AIzaSyAPs75zTgv9NKVZnhub2CkmrgYzLTLiqyU",
+    authDomain: "space-1ce.firebaseapp.com",
+    projectId: "space-1ce",
+    storageBucket: "space-1ce.firebasestorage.app",
+    messagingSenderId: "121866496723",
+    appId: "1:121866496723:web:11bf11485f37c21ac08226",
+    measurementId: "G-6H61P82SYK"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  // 전역 함수로 랭킹 저장 및 불러오기 등록
+  window.saveScoreToCloud = async function(name, score) {
+    if (!name.trim()) name = "무명 우주인";
+    try {
+      await addDoc(collection(db, "rankings"), {
+        name: name,
+        score: score,
+        timestamp: Date.now()
+      });
+      loadRankings();
+    } catch (e) {
+      console.error("랭킹 저장 오류:", e);
+    }
+  };
+
+  window.loadRankings = async function() {
+    const listEl = document.getElementById('ranking-list');
+    listEl.innerHTML = '<div style="color: #94a3b8; font-size: 12px;">랭킹 불러오는 중...</div>';
+    try {
+      const q = query(collection(db, "rankings"), orderBy("score", "desc"), limit(5));
+      const querySnapshot = await getDocs(q);
+      let html = "";
+      let rank = 1;
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        html += `<div class="rank-item"><span>${rank}. ${data.name}</span><span>${data.score}층</span></div>`;
+        rank++;
+      });
+      if (html === "") html = '<div style="color: #94a3b8; font-size: 12px;">아직 기록이 없습니다!</div>';
+      listEl.innerHTML = html;
+    } catch (e) {
+      console.error("랭킹 로드 오류:", e);
+      listEl.innerHTML = '<div style="color: #ff6b6b; font-size: 12px;">랭킹 불러오기 실패</div>';
+    }
+  };
+</script>
 
 <script>
   const canvas = document.getElementById('gameCanvas');
   const ctx = canvas.getContext('2d');
   const container = document.getElementById('game-container');
 
-  // UI 요소
   const scoreDisplay = document.getElementById('score-display');
   const bestDisplay = document.getElementById('best-display');
   const startScreen = document.getElementById('start-screen');
   const gameoverScreen = document.getElementById('gameover-screen');
   const finalScore = document.getElementById('final-score');
-  const finalBest = document.getElementById('final-best');
   const startBtn = document.getElementById('start-btn');
   const restartBtn = document.getElementById('restart-btn');
+  const nicknameInput = document.getElementById('nickname-input');
 
   let width, height;
   function resize() {
@@ -239,7 +360,6 @@
   window.addEventListener('resize', resize);
   resize();
 
-  // 행성 아이스크림 테마 정의
   const PLANET_TYPES = [
     { name: 'mint-earth', base: '#6DB95A', spot: '#3b82f6', crater: '#4A7C59', ring: false },
     { name: 'strawberry-mars', base: '#ff6b6b', spot: '#c92a2a', crater: '#ffa8a8', ring: false },
@@ -248,8 +368,7 @@
     { name: 'berry-uranus', base: '#a855f7', spot: '#6b21a8', crater: '#d8b4fe', ring: true, ringColor: 'rgba(216, 180, 254, 0.55)' }
   ];
 
-  // 게임 상태 변수
-  let gameState = 'START'; // START, PLAYING, EXPLODING, GAMEOVER
+  let gameState = 'START';
   let score = 0;
   let bestScore = parseInt(localStorage.getItem('space_ice_best') || '0', 10);
   bestDisplay.textContent = bestScore;
@@ -263,7 +382,6 @@
   let targetCameraY = 0;
   let shakeTime = 0;
 
-  // 아이스크림 콘 객체
   const cone = {
     x: width / 2,
     y: height - 95,
@@ -272,7 +390,6 @@
     targetX: width / 2
   };
 
-  // 배경 별 생성
   function initStars() {
     stars = [];
     for (let i = 0; i < 65; i++) {
@@ -287,7 +404,6 @@
   }
   initStars();
 
-  // 입력 처리 (마우스 & 터치)
   function updateTargetX(clientX) {
     const rect = canvas.getBoundingClientRect();
     let relX = clientX - rect.left;
@@ -298,20 +414,13 @@
   canvas.addEventListener('mousemove', (e) => {
     if (gameState === 'PLAYING') updateTargetX(e.clientX);
   });
-
   canvas.addEventListener('touchmove', (e) => {
-    if (gameState === 'PLAYING' && e.touches.length > 0) {
-      updateTargetX(e.touches[0].clientX);
-    }
+    if (gameState === 'PLAYING' && e.touches.length > 0) updateTargetX(e.touches[0].clientX);
   }, { passive: true });
-
   canvas.addEventListener('touchstart', (e) => {
-    if (gameState === 'PLAYING' && e.touches.length > 0) {
-      updateTargetX(e.touches[0].clientX);
-    }
+    if (gameState === 'PLAYING' && e.touches.length > 0) updateTargetX(e.touches[0].clientX);
   }, { passive: true });
 
-  // 게임 초기화
   function startGame() {
     score = 0;
     scoreDisplay.textContent = score;
@@ -334,14 +443,12 @@
   startBtn.addEventListener('click', startGame);
   restartBtn.addEventListener('click', startGame);
 
-  // 새로운 행성 아이스크림 생성
   function spawnScoop() {
     const type = PLANET_TYPES[Math.floor(Math.random() * PLANET_TYPES.length)];
     const radius = 29;
     const margin = radius + 24;
     const startX = margin + Math.random() * (width - margin * 2);
 
-    // 난이도 계수 (점수에 비례해 상승)
     const level = Math.min(score, 40);
     const fallSpeed = 3.2 + level * 0.13;
     const swayAmp = score >= 5 ? Math.min(55, (score - 4) * 2.2) : 0;
@@ -360,15 +467,13 @@
     });
   }
 
-  // 폭발 파티클 생성
   function createExplosion(x, y, color) {
     shakeTime = 22;
     for (let i = 0; i < 48; i++) {
       const angle = Math.random() * Math.PI * 2;
       const speed = Math.random() * 7 + 2;
       particles.push({
-        x: x,
-        y: y,
+        x: x, y: y,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed - 2,
         size: Math.random() * 6 + 2,
@@ -379,9 +484,7 @@
     }
   }
 
-  // 업데이트 루프
   function update() {
-    // 별 반짝임
     stars.forEach(s => {
       s.alpha += s.speed;
       if (s.alpha > 1 || s.alpha < 0.2) s.speed *= -1;
@@ -390,25 +493,20 @@
     if (shakeTime > 0) shakeTime--;
 
     if (gameState === 'PLAYING') {
-      // 콘 부드러운 이동
       cone.x += (cone.targetX - cone.x) * 0.28;
 
-      // 스폰 타이머 (점수 높을수록 간격 단축)
       spawnTimer--;
       if (spawnTimer <= 0) {
         spawnScoop();
-        const interval = Math.max(48, 105 - score * 1.8);
-        spawnTimer = interval;
+        spawnTimer = Math.max(48, 105 - score * 1.8);
       }
 
-      // 카메라 스크롤 (쌓인 높이에 따라 위로 이동)
       const stackHeight = stackedScoops.length * 36;
       if (stackHeight > height * 0.35) {
         targetCameraY = stackHeight - height * 0.35;
       }
       cameraY += (targetCameraY - cameraY) * 0.08;
 
-      // 낙하 중인 행성 업데이트
       for (let i = fallingScoops.length - 1; i >= 0; i--) {
         const s = fallingScoops[i];
         s.y += s.vy;
@@ -418,7 +516,6 @@
           s.x = Math.max(s.radius + 10, Math.min(width - s.radius - 10, s.x));
         }
 
-        // 받을 기준 위치 계산 (콘 윗면 또는 맨 위 스쿱)
         let targetY = cone.y;
         let targetX = cone.x;
         let catchRadius = cone.topWidth * 0.55;
@@ -430,17 +527,12 @@
           catchRadius = topScoop.radius * 0.88;
         }
 
-        // 받기 판정
         const dy = Math.abs(s.y - targetY);
         const dx = Math.abs(s.x - targetX);
 
         if (dy < 22 && dx < catchRadius) {
           const offsetX = Math.max(-22, Math.min(22, s.x - cone.x));
-          stackedScoops.push({
-            offsetX: offsetX,
-            radius: s.radius,
-            type: s.type
-          });
+          stackedScoops.push({ offsetX: offsetX, radius: s.radius, type: s.type });
           fallingScoops.splice(i, 1);
 
           score++;
@@ -453,7 +545,6 @@
           continue;
         }
 
-        // 바닥 추락 판정 (게임 오버)
         const floorY = height - cameraY + 10;
         if (s.y - s.radius > floorY) {
           createExplosion(s.x, height - cameraY - 15, s.type.base);
@@ -463,15 +554,18 @@
           setTimeout(() => {
             gameState = 'GAMEOVER';
             finalScore.textContent = `${score}층`;
-            finalBest.textContent = `${bestScore}층`;
             gameoverScreen.classList.remove('hidden');
+            
+            // 점수 클라우드에 전송 및 랭킹 불러오기
+            if (window.saveScoreToCloud) {
+              window.saveScoreToCloud(nicknameInput.value, score);
+            }
           }, 850);
           break;
         }
       }
     }
 
-    // 파티클 업데이트
     for (let i = particles.length - 1; i >= 0; i--) {
       const p = particles[i];
       p.x += p.vx;
@@ -482,13 +576,11 @@
     }
   }
 
-  // 진짜 아이스크림 와플 콘 그리기
   function drawCone(x, y) {
     const halfW = cone.topWidth / 2;
     const h = cone.height;
 
     ctx.save();
-    // 콘 본체 삼각형
     const grad = ctx.createLinearGradient(x - halfW, y, x + halfW, y);
     grad.addColorStop(0, '#d99b52');
     grad.addColorStop(0.5, '#f2be7e');
@@ -502,7 +594,6 @@
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // 와플 격자 무늬 클리핑
     ctx.clip();
     ctx.strokeStyle = 'rgba(120, 63, 18, 0.35)';
     ctx.lineWidth = 2;
@@ -519,7 +610,6 @@
       ctx.stroke();
     }
 
-    // 콘 상단 테두리 림
     ctx.restore();
     ctx.beginPath();
     ctx.ellipse(x, y, halfW, 6, 0, 0, Math.PI * 2);
@@ -530,11 +620,8 @@
     ctx.stroke();
   }
 
-  // 행성 아이스크림 스쿱 그리기
   function drawPlanetScoop(x, y, r, type) {
     ctx.save();
-
-    // 행성 본체 (구체 그라데이션)
     const grad = ctx.createRadialGradient(x - r * 0.3, y - r * 0.3, r * 0.1, x, y, r);
     grad.addColorStop(0, '#ffffff');
     grad.addColorStop(0.25, type.base);
@@ -545,7 +632,6 @@
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // 아이스크림 하단 스쿱 주름
     ctx.beginPath();
     ctx.arc(x - r * 0.55, y + r * 0.65, r * 0.28, 0, Math.PI * 2);
     ctx.arc(x, y + r * 0.72, r * 0.3, 0, Math.PI * 2);
@@ -553,7 +639,6 @@
     ctx.fillStyle = type.base;
     ctx.fill();
 
-    // 행성 크레이터/무늬
     ctx.fillStyle = type.crater;
     ctx.globalAlpha = 0.45;
     ctx.beginPath();
@@ -563,7 +648,6 @@
     ctx.fill();
     ctx.globalAlpha = 1.0;
 
-    // 토성/천왕성 고리
     if (type.ring) {
       ctx.beginPath();
       ctx.ellipse(x, y, r * 1.55, r * 0.38, -0.22, 0, Math.PI * 2);
@@ -571,15 +655,12 @@
       ctx.lineWidth = 5;
       ctx.stroke();
     }
-
     ctx.restore();
   }
 
-  // 렌더링 루프
   function draw() {
     ctx.clearRect(0, 0, width, height);
 
-    // 우주 배경 별
     stars.forEach(s => {
       ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
       ctx.beginPath();
@@ -588,20 +669,16 @@
     });
 
     ctx.save();
-    // 폭발 시 화면 흔들림
     if (shakeTime > 0) {
       const dx = (Math.random() - 0.5) * 14;
       const dy = (Math.random() - 0.5) * 14;
       ctx.translate(dx, dy);
     }
 
-    // 카메라 이동 적용
     ctx.translate(0, cameraY);
 
-    // 콘 그리기
     drawCone(cone.x, cone.y);
 
-    // 쌓인 행성 아이스크림 그리기
     stackedScoops.forEach((scoop, index) => {
       const sway = Math.sin(Date.now() * 0.003 + index * 0.4) * Math.min(4, index * 0.25);
       const sx = cone.x + scoop.offsetX + sway;
@@ -609,12 +686,10 @@
       drawPlanetScoop(sx, sy, scoop.radius, scoop.type);
     });
 
-    // 떨어지는 행성 아이스크림 그리기
     fallingScoops.forEach(s => {
       drawPlanetScoop(s.x, s.y, s.radius, s.type);
     });
 
-    // 폭발 파티클 그리기
     particles.forEach(p => {
       ctx.globalAlpha = Math.max(0, p.life);
       ctx.fillStyle = p.color;
